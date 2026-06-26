@@ -154,3 +154,26 @@ print(p_county)
 ggsave("POXC_by_county_boxplot.png", p_county, width = 12, height = 7, dpi = 300)
 
 cat("\nSaved POXC_overall_boxplot.png and POXC_by_county_boxplot.png\n")
+
+# ---- Metadata export ----------------------------------------------------
+anova_POXC <- anova(final_model)
+
+POXC_meta <- as.data.frame(emm_POXC_table) %>%
+  dplyr::rename(Mean = if ("response" %in% names(emm_POXC_table)) "response" else "emmean") %>%
+  dplyr::left_join(
+    as.data.frame(cld_POXC) %>% dplyr::select(Type, CLD = .group),
+    by = "Type"
+  ) %>%
+  mutate(
+    Metric         = "POXC",
+    Scale          = if (use_log) "log" else "raw",
+    Shapiro_raw_p  = signif(shapiro_raw$p.value, 3),
+    Shapiro_log_p  = signif(shapiro_log$p.value, 3),
+    LMM_F          = round(anova_POXC$`F value`[1], 3),
+    LMM_p          = signif(anova_POXC$`Pr(>F)`[1], 3)
+  ) %>%
+  dplyr::select(Metric, Scale, Shapiro_raw_p, Shapiro_log_p,
+                LMM_F, LMM_p, Type, Mean, CLD)
+
+write.csv(POXC_meta, "POXC_metadata.csv", row.names = FALSE)
+cat("Saved POXC_metadata.csv\n")
