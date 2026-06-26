@@ -59,12 +59,12 @@ stopifnot(n_distinct(bulk_density_driftless$Field) == 31)
 model_BD     <- lmer(Bulk_Density      ~ Type + (1 | Field), data = bulk_density_driftless)
 model_BD_log <- lmer(log(Bulk_Density) ~ Type + (1 | Field), data = bulk_density_driftless)
 
-shapiro_raw <- shapiro.test(residuals(model_BD))
-shapiro_log <- shapiro.test(residuals(model_BD_log))
-cat("Shapiro-Wilk, raw-scale residuals:  p =", signif(shapiro_raw$p.value, 3), "\n")
-cat("Shapiro-Wilk, log-scale residuals:  p =", signif(shapiro_log$p.value, 3), "\n")
+shapiro_raw_BD <- shapiro.test(residuals(model_BD))
+shapiro_log_BD <- shapiro.test(residuals(model_BD_log))
+cat("Shapiro-Wilk, raw-scale residuals:  p =", signif(shapiro_raw_BD$p.value, 3), "\n")
+cat("Shapiro-Wilk, log-scale residuals:  p =", signif(shapiro_log_BD$p.value, 3), "\n")
 
-use_log  <- shapiro_log$p.value > shapiro_raw$p.value
+use_log  <- shapiro_log_BD$p.value > shapiro_raw_BD$p.value
 final_BD <- if (use_log) model_BD_log else model_BD
 cat("Using", if (use_log) "LOG-transformed" else "RAW-scale", "model for inference.\n\n")
 
@@ -166,12 +166,12 @@ BD_meta <- as.data.frame(emm_BD_table) %>%
     by = "Type"
   ) %>%
   mutate(
-    Metric         = "Bulk_Density",
-    Scale          = if (use_log) "log" else "raw",
-    Shapiro_raw_p  = signif(shapiro_raw$p.value, 3),
-    Shapiro_log_p  = signif(shapiro_log$p.value, 3),
-    LMM_F          = round(anova_BD$`F value`[1], 3),
-    LMM_p          = signif(anova_BD$`Pr(>F)`[1], 3)
+    Metric        = "Bulk_Density",
+    Scale         = if (use_log) "log" else "raw",
+    Shapiro_raw_p = signif(shapiro_raw_BD$p.value, 3),
+    Shapiro_log_p = signif(shapiro_log_BD$p.value, 3),
+    LMM_F         = round(anova_BD$`F value`[1], 3),
+    LMM_p         = signif(anova_BD$`Pr(>F)`[1], 3)
   ) %>%
   dplyr::select(Metric, Scale, Shapiro_raw_p, Shapiro_log_p,
                 LMM_F, LMM_p, Type, Mean, CLD)
